@@ -32,12 +32,12 @@ const char MAIN_page[] PROGMEM = R"=====(
    <h1 class="welcome">WiFi</h1>
    <br>
    <button class="mode" id="modeBtn">change mode</button>
-   <div class="wifiSTA" id="staMode" style="display: block;">
-      <form action='/wifi' method='post'><!--按下submit，瀏覽器訪問/test，且用post方法-->
+   <div class="wifiSTA" style="display: block;">
+      <form action='/wifi' method='post' class="wifiForm"><!--按下submit，瀏覽器訪問/wifi，且用post方法-->
          <label for="ssid">SSID: </label>
          <input type='text' name='ssid' value=''><br>
          <label for="pwd">PWD: </label>
-         <input type='text' name='pwd' value=''><br>
+         <input type='password' name='pwd' value=''><br>
          <input type='submit' value='connect'>
       </form>
    </div>
@@ -52,6 +52,7 @@ const char MAIN_page[] PROGMEM = R"=====(
       const modeButton = document.querySelector('#modeBtn');
       const wifiAP = document.querySelector('.wifiAP');
       const wifiSTA = document.querySelector('.wifiSTA');
+
       function modeAlert() {
          var alertMsg;
          alertMsg = wifiSTA.style.display === 'none' ? 'AP mode' : 'WiFi mode';
@@ -88,6 +89,33 @@ const char MAIN_page[] PROGMEM = R"=====(
             postApSatus();
          }
       });
+      document.querySelector('wifiForm').addEventListener('submit', function(event) {
+         event.preventDefault(); // 防止表單被正常提交
+       
+         // 取得SSID和PWD的值
+         var ssid = document.querySelector('input[name="ssid"]').value;
+         var pwd = document.querySelector('input[name="pwd"]').value;
+       
+         // 建立XMLHttpRequest物件
+         var xhr = new XMLHttpRequest();
+       
+         // 設定傳送的目標網址
+         xhr.open('POST', '/wifi');
+       
+         // 設定要傳送的資料格式
+         xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+       
+         // 設定傳送的資料，格式為「key1=value1&key2=value2」
+         var data = 'ssid=' + encodeURIComponent(ssid) + '&pwd=' + encodeURIComponent(pwd);
+       
+         // 傳送資料
+         xhr.send(data);
+       
+         // 傳送完成後的動作
+         xhr.addEventListener('load', function() {
+           console.log('Response:', xhr.responseText);
+         });
+       });
       function postApSatus() {
          var xhttp = new XMLHttpRequest();
          const formData = new FormData();
@@ -107,5 +135,6 @@ const char MAIN_page[] PROGMEM = R"=====(
 
    </script>
 </body>
+
 </html>
 )=====";

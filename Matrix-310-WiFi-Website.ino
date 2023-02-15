@@ -1,22 +1,16 @@
+//wifi設const不能改？
+//handle wifi ssid cant see
 #include "src/Artila-Matrix310.h"
 #include "src/index.h"
 #include <WiFi.h>
 #include <WebServer.h>
-#include <ESPAsyncWebServer.h>
-byte mac[] = { 0x98, 0xf4, 0xab, 0x17, 0x24, 0xc4 };
-byte ip[] = {192, 168, 1, 125};
-const char *ssid = "Artila";
-const char *password = "CF25B34315";
-const char *apName = "Matrix-310";
-const char *apPwd = "00000000";
+// Replace with your network credentials
 WebServer server(80);
 bool isStaOn = true;
 bool isApOn = false;
 void setupRouting() {
   server.on("/", handleRoot);
-  server.on("/wifi", HTTP_POST, []() {
-    handleAp(server.arg("buttonText"));
-  });
+  server.on("/wifi", HTTP_POST, handleWifi);
   server.on("/ap", HTTP_POST, []() {
     handleAp(server.arg("buttonText"));
   });
@@ -26,19 +20,28 @@ void handleRoot() {
   String s = MAIN_page;              // Read HTML contents
   server.send(200, "text/html", s);  // Send web page
 }
-void handleWifi(String message) {
-  Serial.printf("msg\n: %s", message);
-  if (message == "ON") {
-    isStaOn = false;
-  } else if (message == "OFF") {
-    isStaOn = true;
-  }
-  String msg = "wifi " + message;
-  server.send(200, "text/plain", msg);  // Send web page
+void handleWifi() {
+  String ssid_str = server.arg("ssid");
+  String pwd_str = server.arg("pwd");
+  char ssid[10];
+  char pwd[10];
+  strcpy(ssid, ssid_str.c_str());
+  strcpy(pwd, pwd_str.c_str()); 
+  // ssid = server.arg("ssid").c_str();  // 取得SSID值
+  // pwd = server.arg("pwd").c_str();    // 取得PWD值
+
+  // 在此可以進一步處理SSID和PWD值，例如儲存到EEPROM或連接WIFI等
+  Serial.print("SSID: ");
+  Serial.println(ssid);
+  Serial.print("PWD: ");
+  Serial.println(pwd);
+  wifiSTA(ssid, pwd);
+  // 回傳回應
+  server.send(200, "text/plain", "Connected to WIFI!");
 }
 
 void handleAp(String message) {
-  Serial.printf("msg: %s", message);
+  Serial.printf("msg: %s\n", message);
   // String buttonText = server.arg("buttonText");
   if (message == "ON") {
     isApOn = false;
@@ -50,13 +53,16 @@ void handleAp(String message) {
   server.send(200, "text/plain", msg);
 }
 
-void wifiSTA() {
+void wifiSTA(char *ssid, char *pwd) {
+  // IPAddress ip(192, 168, 3, 1);
+  // IPAddress gateway(192, 168, 3, 254);  // 指定網關
+  // IPAddress subnet(255, 255, 255, 0);
   Serial.println();
   Serial.println();
   Serial.print("Connecting to ");
   Serial.println(ssid);
   // Set Wifi mode
-  WiFi.begin(ssid, password);
+  WiFi.begin(ssid, pwd);
 
   unsigned long startTime = millis();
   while (WiFi.status() != WL_CONNECTED) {
@@ -70,43 +76,40 @@ void wifiSTA() {
       return;
     }
   }
-
+  // WiFi.config(ip, gateway, subnet);
   Serial.println("");
   Serial.println("WiFi connected");
   Serial.println("IP address: ");
   Serial.println(WiFi.localIP());
 }
 void wifiAP() {
+  const char *apName = "Matrix-310";
+  const char *apPwd = "00000000";
+  IPAddress ip(192, 168, 3, 254);
+  IPAddress gateway(192, 168, 3, 254);  // 指定網關
+  IPAddress subnet(255, 255, 255, 0);
   if (isApOn) {
     Serial.println();
     Serial.println();
     Serial.print("AP name: ");
     Serial.println(apName);
-    IPAddress IP = WiFi.softAP(apName, apPwd);
+    WiFi.softAP(apName, apPwd);
+    WiFi.softAPConfig(ip, gateway, subnet);
     Serial.print("AP IP address: ");
-    Serial.println(IP);
+    Serial.println(WiFi.softAPIP());
     Serial.println("AP started");
   } else {
     WiFi.softAPdisconnect();
     Serial.println("AP stopped");
   }
 }
-void eth(){
-  Ethernet.init(LAN_CS); // pin 5
-  Serial.println("Initialize Ethernet with static IP:");
-  //Matrix310 tries connecting the internet with static ip
-  Ethernet.begin(mac, ip);
-  // Matrix-310 already connect to the internet
-  Serial.print("  Static IP ");
-  Serial.println(Ethernet.localIP());
-  // give the Ethernet shield a second to initialize:
-  delay(1000);
-}
 void setup() {
+  char ssid[] = "Artila";
+  char pwd[] = "CF25B34315";
   Serial.begin(115200);
   delay(10);
   WiFi.mode(WIFI_AP_STA);
-  wifiSTA();
+  wifiSTA(ssid, pwd);
   setupRouting();
 }
 
