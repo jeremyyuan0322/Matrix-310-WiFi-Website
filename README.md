@@ -1,2 +1,1 @@
-初版
-No website!
+WiFi Webstie
