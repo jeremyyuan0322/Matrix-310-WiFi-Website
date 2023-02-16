@@ -45,8 +45,10 @@ void handleWifi() {
   else{
     msg = "Connect fail!";
   }
+  setupRouting();
   Serial.println(msg);
   String html = "<script>alert('" + msg + "');</script>";
+  server.sendHeader("Location", String("/"));
   // 回傳回應
   server.send(200, "text/html", html);
   free(ssid);
@@ -54,6 +56,7 @@ void handleWifi() {
 }
 
 void handleAp(String message) {
+  setupRouting();
   Serial.printf("msg: %s\n", message);
   // String buttonText = server.arg("buttonText");
   if (message == "ON") {
@@ -123,6 +126,7 @@ void setup() {
   Serial.begin(115200);
   delay(10);
   WiFi.mode(WIFI_AP_STA);
+  wifiAP();
   wifiSTA(ssid, pwd);
   setupRouting();
 }
