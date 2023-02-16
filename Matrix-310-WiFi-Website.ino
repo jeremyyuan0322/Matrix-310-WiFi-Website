@@ -1,5 +1,6 @@
 //wifi設const不能改？
 //handle wifi ssid cant see
+//重連webserver?mantain?check connect?
 #include "src/Artila-Matrix310.h"
 #include "src/index.h"
 #include <WiFi.h>
@@ -21,10 +22,13 @@ void handleRoot() {
   server.send(200, "text/html", s);  // Send web page
 }
 void handleWifi() {
+  String msg;
   String ssid_str = server.arg("ssid");
   String pwd_str = server.arg("pwd");
-  char ssid[10];
-  char pwd[10];
+  // char ssid[20];
+  char *ssid = (char*) malloc(20 * sizeof(char));
+  // char pwd[20];
+  char *pwd = (char*) malloc(20 * sizeof(char));
   strcpy(ssid, ssid_str.c_str());
   strcpy(pwd, pwd_str.c_str()); 
   // ssid = server.arg("ssid").c_str();  // 取得SSID值
@@ -35,9 +39,18 @@ void handleWifi() {
   Serial.println(ssid);
   Serial.print("PWD: ");
   Serial.println(pwd);
-  wifiSTA(ssid, pwd);
+  if(wifiSTA(ssid, pwd)){
+    msg = "Connected to " + String(ssid);
+  }
+  else{
+    msg = "Connect fail!";
+  }
+  Serial.println(msg);
+  String html = "<script>alert('" + msg + "');</script>";
   // 回傳回應
-  server.send(200, "text/plain", "Connected to WIFI!");
+  server.send(200, "text/html", html);
+  free(ssid);
+  free(pwd);
 }
 
 void handleAp(String message) {
@@ -53,10 +66,10 @@ void handleAp(String message) {
   server.send(200, "text/plain", msg);
 }
 
-void wifiSTA(char *ssid, char *pwd) {
-  // IPAddress ip(192, 168, 3, 1);
-  // IPAddress gateway(192, 168, 3, 254);  // 指定網關
-  // IPAddress subnet(255, 255, 255, 0);
+bool wifiSTA(char *ssid, char *pwd) {
+  IPAddress ip(192, 168, 3, 1);
+  IPAddress gateway(192, 168, 3, 254);  // 指定網關
+  IPAddress subnet(255, 255, 255, 0);
   Serial.println();
   Serial.println();
   Serial.print("Connecting to ");
@@ -73,7 +86,7 @@ void wifiSTA(char *ssid, char *pwd) {
     }
     if (millis() - startTime > 6000) {
       Serial.println("\nwifi connect fail");
-      return;
+      return false;
     }
   }
   // WiFi.config(ip, gateway, subnet);
@@ -81,6 +94,7 @@ void wifiSTA(char *ssid, char *pwd) {
   Serial.println("WiFi connected");
   Serial.println("IP address: ");
   Serial.println(WiFi.localIP());
+  return true;
 }
 void wifiAP() {
   const char *apName = "Matrix-310";

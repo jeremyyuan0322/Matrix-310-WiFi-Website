@@ -60,7 +60,7 @@ const char MAIN_page[] PROGMEM = R"=====(
       }
       function apAlert(apStutus) {
          var alertMsg;
-         alertMsg = apStutus === 'ON' ? 'AP OFF' : 'AP ON\nAP name: Matrix-310\npasswork: 00000000';
+         alertMsg = apStutus === 'ON' ? 'AP OFF' : 'AP ON\nAP name: Matrix-310\npassword: 00000000';
          alert(alertMsg);
       }
       modeButton.addEventListener('click', function () {
@@ -100,7 +100,7 @@ const char MAIN_page[] PROGMEM = R"=====(
          var xhr = new XMLHttpRequest();
        
          // 設定傳送的目標網址
-         xhr.open('POST', '/wifi');
+         xhr.open('POST', '/wifi', true);
        
          // 設定要傳送的資料格式
          xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
@@ -120,19 +120,9 @@ const char MAIN_page[] PROGMEM = R"=====(
          var xhttp = new XMLHttpRequest();
          const formData = new FormData();
          formData.append('buttonText', apButton.textContent);
-         xhttp.open("POST", "ap", true);
+         xhttp.open("POST", "/ap", true);
          xhttp.send(formData);
       }
-      function apStutus(status) {
-         var isApOn = false;
-         if (status === "turn_on") {
-            isApOn = true;
-         } else if (status === "turn_off") {
-            isApOn = false;
-         }
-         handleWifi(isApOn);
-      }
-
    </script>
 </body>
 
