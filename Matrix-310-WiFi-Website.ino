@@ -45,27 +45,26 @@ void handleWifi() {
   else{
     msg = "Connect fail!";
   }
-  setupRouting();
+  // setupRouting();
   Serial.println(msg);
-  String html = "<script>alert('" + msg + "');</script>";
-  server.sendHeader("Location", String("/"));
+  // server.sendHeader("Location", String("/"));
+  // String html = "<script>alert('" + msg + "');</script>";
   // 回傳回應
-  server.send(200, "text/html", html);
+  server.send(200, "text/plain", msg);
   free(ssid);
   free(pwd);
 }
 
 void handleAp(String message) {
-  setupRouting();
+  // setupRouting();
   Serial.printf("msg: %s\n", message);
   // String buttonText = server.arg("buttonText");
   if (message == "ON") {
-    isApOn = false;
-  } else if (message == "OFF") {
     isApOn = true;
+  } else if (message == "OFF") {//現在ap是關的，要打開
+    isApOn = false;
   }
-  wifiAP();
-  String msg = "wifi ap" + message;
+  String msg = wifiAP();
   server.send(200, "text/plain", msg);
 }
 
@@ -99,25 +98,30 @@ bool wifiSTA(char *ssid, char *pwd) {
   Serial.println(WiFi.localIP());
   return true;
 }
-void wifiAP() {
+String wifiAP() {
   const char *apName = "Matrix-310";
   const char *apPwd = "00000000";
   IPAddress ip(192, 168, 3, 254);
   IPAddress gateway(192, 168, 3, 254);  // 指定網關
   IPAddress subnet(255, 255, 255, 0);
+  String apStatus;
   if (isApOn) {
+    WiFi.softAPdisconnect();
+    apStatus = "AP stopped";
+    Serial.println(apStatus);
+    return apStatus;
+  } else {
     Serial.println();
     Serial.println();
     Serial.print("AP name: ");
     Serial.println(apName);
     WiFi.softAP(apName, apPwd);
     WiFi.softAPConfig(ip, gateway, subnet);
-    Serial.print("AP IP address: ");
-    Serial.println(WiFi.softAPIP());
+    String apIp = WiFi.softAPIP().toString();
+    apStatus = "AP IP address: " + apIp;
+    Serial.println(apStatus);
     Serial.println("AP started");
-  } else {
-    WiFi.softAPdisconnect();
-    Serial.println("AP stopped");
+    return apStatus;
   }
 }
 void setup() {
@@ -126,7 +130,7 @@ void setup() {
   Serial.begin(115200);
   delay(10);
   WiFi.mode(WIFI_AP_STA);
-  wifiAP();
+  wifiAP();//一開始ap是關的(isApOpen = false)，要先打開
   wifiSTA(ssid, pwd);
   setupRouting();
 }
